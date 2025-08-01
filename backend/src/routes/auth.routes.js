@@ -16,3 +16,5 @@ authRoutes.post("/logout", authMiddleware ,logout);
 authRoutes.get("/check",authMiddleware , check);
 
 export default authRoutes;
+
+// this provides all routes
