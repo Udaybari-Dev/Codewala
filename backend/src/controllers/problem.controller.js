@@ -1,5 +1,5 @@
 import {db} from '../libs/db.js';
-import { getJudge0LanguageId,pollBatchResults, submitBatch } from '../libs/judge0.lib.js';
+import { getJudge0LanguageId, pollBatchResults, submitBatch } from '../libs/judge0.lib.js';
 
 
 

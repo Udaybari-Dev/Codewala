@@ -14,65 +14,95 @@ export const getJudge0LanguageId = (language) => {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export const pollBatchResults = async (tokens, maxAttempts = 10) => {
-  let attempts = 0;
+// export const pollBatchResults = async (tokens, maxAttempts = 10) => {
+//     let attempts = 0;
 
-  while (attempts < maxAttempts) {
-    try {
-      const { data } = await axios.get(`${process.env.JUDGE0_API_URL}/submissions/batch`, {
-        params: {
-          tokens: tokens.map(t => typeof t === 'string' ? t : t.token).join(','),
-          base64_encoded: false,
-        },
-      });
+//     while (attempts < maxAttempts) {
+//         try {
+//         const { data } = await axios.get(`${process.env.JUDGE0_API_URL}/submissions/batch`, {
+//             params: {
+//             tokens: tokens.join(','),
+//             base64_encoded: false,
+//             fields: '*',
+//             },
+//         });
 
-      const results = data?.submissions || [];
+//         const results = data?.submissions || [];
 
-      const areAllResultsValid = results.length === tokens.length &&
-        results.every(r => r && r.status && typeof r.status.id === 'number');
+//         const areAllResultsValid = results.length === tokens.length &&
+//             results.every(r => r && r.status && typeof r.status.id === 'number');
 
-      if (!areAllResultsValid) {
-        console.warn("⚠️ Some results are null or missing status. Retrying...");
-        await sleep(1000);
-        attempts++;
-        continue;
-      }
+//         if (!areAllResultsValid) {
+//             console.warn("⚠️ Some results are null or missing status. Retrying...");
+//             await sleep(1000);
+//             attempts++;
+//             continue;
+//         }
 
-      const isAllDone = results.every(
-        (r) => r.status.id !== 1 && r.status.id !== 2 // 1: In Queue, 2: Processing
-      );
+    //     const isAllDone = results.every(
+    //         (r) => r.status.id !== 1 && r.status.id !== 2 // 1: In Queue, 2: Processing
+    //     );
 
-      if (isAllDone) return results;
+    //     if (isAllDone) return results;
 
-      await sleep(1000);
-      attempts++;
+    //     await sleep(1000);
+    //     attempts++;
 
-    } catch (err) {
-      console.error("❌ Error in pollBatchResults:", err.response?.data || err.message);
-      throw new Error("Failed to poll Judge0 results");
-    }
-  }
+    //     } catch (err) {
+    //     console.error("❌ Error in pollBatchResults:", err.response?.data || err.message);
+    //     throw new Error("Failed to poll Judge0 results");
+    //     }
+    // }
 
-  throw new Error("❌ Polling timed out after 10 attempts");
+    // throw new Error("❌ Polling timed out after 10 attempts");
+// };
+
+export const pollBatchResults = async (tokens) => {
+        let attempts = 0;
+
+        while (attempts < 10) {
+            const { data } = await axios.get(
+            `${process.env.JUDGE0_API_URL}/submissions/batch`,
+            {
+                params: {
+                tokens: tokens.join(','),     // works only if tokens is an array of strings
+                base64_encoded: false,
+                fields: '*',
+                },
+            }
+            );
+
+            const allDone = data.submissions.every(sub => sub.status?.id >= 3);
+
+            if (allDone) return data.submissions;
+
+            console.warn("⚠️ Some results are null or missing status. Retrying...");
+            await sleep(1500);
+            attempts++;
+        }
+
+        throw new Error("❌ Polling timed out after 10 attempts");
 };
 
 
+
+
 export const submitBatch = async (submissions) => {
-  try {
-    const { data } = await axios.post(
-      `${process.env.JUDGE0_API_URL}/submissions/batch?base64_encoded=false`,{
-         submissions 
-      });
-     
-      console.log("Submission Results:", data);
+        try {
+            const { data } = await axios.post(
+            `${process.env.JUDGE0_API_URL}/submissions/batch?base64_encoded=false`,{
+                submissions 
+            });
+            
+            console.log("Submission Results:", data);
 
-    
-    return data;
+            
+            return data.tokens.map((t) => t.token);   // ✅ Just return array of token strings
 
-  } catch (error) {
-    console.error("Error in submission:", error.response?.data || error.message);
-    throw error;
-  }
+        } catch (error) {
+            console.error("Error in submission:", error.response?.data || error.message);
+            throw error;
+        }
 };
 
 
