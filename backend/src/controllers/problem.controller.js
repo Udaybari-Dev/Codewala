@@ -37,15 +37,19 @@ export const createProblem  = async (req , res)=> {
 
             }))
 
-            const submissionResult = await submitBatch(submissions)
+            const submissionResult = await submitBatch(submissions); // ye token dega for langunge
 
-            const tokens = submissionResult.map((res) =>res.token);
-            
-            const results = await pollBatchResults(tokens);
+            const tokens = submissionResult.map((res) =>res.token); // vo token hamne extract kiya 
+             
+            const results = await pollBatchResults(tokens); // get req hit kri same end  point pe  for checking hte status ki execution ho gyi ya nahi
 
             for( let i =0  ; i< results.length ; i++){
                 const result = result[i];
-
+                console.log("Result for submission----- :", results[i]);
+                // console.log(
+                //     `testcase ${i+1} for language ${language} ------ result: ${JSON.stringify(result.status.description)}`
+                // );
+                
                 if(result.status.id !== 3){
                     return res.status(400).json({ error : `Testcase ${i+1} failed for language ${language}` })
                 } 
@@ -68,20 +72,20 @@ export const createProblem  = async (req , res)=> {
                 },
 
             })
-            return res.status(201).json(newProblem);
-            
-
-        }
-        
+            return res.status(201).json({
+                success: true,
+                message: "Problem created successfully",
+                problem: newProblem
+            });
+        }      
     } catch (error) {
-        
+        console.log(error);
+        return res.status(500).json({
+            error: "Errror while creating a problem",
+        })
     }
-
-
-
-
-
 }
+
 
 export const getAllProblem = async (req , res)=> {}
 
