@@ -2,18 +2,37 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 
 
+// export const getLanguageId = (lang) => {
+
+//     if (!lang || typeof lang !== "string") return null;
+
+//     const languages = {
+//         "cpp":54,
+//         "java":62,
+//         "javascript":63
+//     }
+
+//     return languages[lang.toLowerCase()] || null;
+// }
 export const getLanguageId = (lang) => {
-
-    if (!lang || typeof lang !== "string") return null;
-
-    const languages = {
-        "cpp":54,
-        "java":62,
-        "javascript":63
+    console.log("Input language:", lang, "Type:", typeof lang);
+    
+    if (!lang || typeof lang !== "string") {
+        console.log("Invalid language input");
+        return null;
     }
 
-    return languages[lang.toLowerCase()] || null;
+    const languages = {
+        "cpp": 54,
+        "java": 62, 
+        "javascript": 63
+    };
+
+    const result = languages[lang.toLowerCase()] || null;
+    console.log("Language mapping result:", result);
+    return result;
 }
+
 
 
 
