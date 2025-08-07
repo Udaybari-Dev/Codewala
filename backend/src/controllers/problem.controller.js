@@ -1,8 +1,9 @@
 import {db} from '../libs/db.js';
 import { getLanguageId , submitToken, submitBatch } from '../libs/judge0.lib.js';
 
-
-
+if (!Array.isArray(referenceSolution)) {
+  return res.status(400).json({ error: "referenceSolution must be an array" });
+}
 
 export const createProblem = async (req, res) => {
         const {
@@ -27,10 +28,10 @@ export const createProblem = async (req, res) => {
                 // stdin: 
                 // expectedOutput:
 
-                const languageId = getLanguageById(language);
+                const languageId = getLanguageId(language);
                 
                 // I am creating Batch submission
-                const submissions = visibleTestCases.map((testcase)=>({
+                const submissions = testcases.map((testcase)=>({
                     source_code:completeCode,
                     language_id: languageId,
                     stdin: testcase.input,
@@ -39,7 +40,7 @@ export const createProblem = async (req, res) => {
 
                 
                 const submitResult = await submitBatch(submissions);
-                // console.log(submitResult);
+                console.log(submitResult);
 
                 const resultToken = submitResult.map((value)=> value.token);
 
@@ -298,10 +299,6 @@ export const createProblem = async (req, res) => {
 //         });
 //     }
 // };
-
-
-
-
 
 
 export const getAllProblem = async (req , res)=> {}

@@ -3,21 +3,20 @@ import dotenv from 'dotenv';
 
 
 export const getLanguageId = (lang) => {
-    const language = {
+    const languages = {
         "c++":54,
         "java":62,
         "javascript":63
     }
 
-    return language[lang.toLowerCase()];
+    return languages[lang.toLowerCase()];
 }
 
 
 
 export const submitBatch = async (submissions) => {
         try {
-          const response = await axios.post(
-            `${process.env.JUDGE0_API_URL}/submissions/batch`,
+          const response = await axios.post(`${process.env.JUDGE0_API_URL}/submissions/batch`,
             { submissions },
             {
               params: {
@@ -74,6 +73,9 @@ export const submitToken = async (resultToken) => {
         await wait(1000); // wait 1 second before next poll
     }
 };
+
+
+
 
 
 //                                       {
