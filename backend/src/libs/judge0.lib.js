@@ -1,18 +1,99 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
 
-export const getJudge0LanguageId = (language) => {
-    const languageMap = {
-        "PYTHON" : 71,
-        "JAVA" : 62,
-        "JAVASCRIPT" : 63,
+
+export const getLanguageId = (lang) => {
+    const language = {
+        "c++":54,
+        "java":62,
+        "javascript":63
     }
 
-    return languageMap[language.toUpperCase()] || null;
+    return language[lang.toLowerCase()];
 }
 
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export const submitBatch = async (submissions) => {
+
+
+            const options = {
+                method: 'POST',
+                url: 'https://judge0-ce.p.rapidapi.com/submissions/batch',
+                params: {
+                  base64_encoded: 'false'
+                },
+                headers: {
+                  'x-rapidapi-key': process.env.JUDGE0_KEY,
+                  'x-rapidapi-host': 'judge0-ce.p.rapidapi.com',
+                  'Content-Type': 'application/json'
+                },
+                data: {
+                  submissions
+                }
+            };
+
+            async function fetchData() {
+                try {
+                  const response = await axios.request(options);
+                  return response.data;
+                } catch (error) {
+                  console.error(error);
+                }
+            }
+            return await fetchData();
+}
+
+
+const waiting = async(timer)=>{
+        setTimeout(()=>{return 1;},timer);
+}
+
+
+
+export const submitToken = async(resultToken)=>{
+
+            const options = {
+                method: 'GET',
+                url: 'https://judge0-ce.p.rapidapi.com/submissions/batch',
+                params: {
+                  tokens: resultToken.join(","),
+                  base64_encoded: 'false',
+                  fields: '*'
+                },
+                headers: {
+                  'x-rapidapi-key': process.env.JUDGE0_KEY,
+                  'x-rapidapi-host': 'judge0-ce.p.rapidapi.com'
+                }
+            };
+
+            async function fetchData() {
+                try {
+                  const response = await axios.request(options);
+                  return response.data;
+                } catch (error) {
+                  console.error(error);
+                }
+            }
+
+
+            while(true){
+
+                const result =  await fetchData();
+
+                const IsResultObtained =  result.submissions.every((r)=>r.status_id>2);
+
+                if(IsResultObtained)
+                  return result.submissions;
+
+                
+                await waiting(1000);
+            }
+}
+
+
+
+// const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // export const pollBatchResults = async (tokens, maxAttempts = 10) => {
 //     let attempts = 0;
@@ -39,71 +120,70 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 //             continue;
 //         }
 
-    //     const isAllDone = results.every(
-    //         (r) => r.status.id !== 1 && r.status.id !== 2 // 1: In Queue, 2: Processing
-    //     );
+//         const isAllDone = results.every(
+//             (r) => r.status.id !== 1 && r.status.id !== 2 // 1: In Queue, 2: Processing
+//         );
 
-    //     if (isAllDone) return results;
+//         if (isAllDone) return results;
 
-    //     await sleep(1000);
-    //     attempts++;
+//         await sleep(1000);
+//         attempts++;
 
-    //     } catch (err) {
-    //     console.error("❌ Error in pollBatchResults:", err.response?.data || err.message);
-    //     throw new Error("Failed to poll Judge0 results");
-    //     }
-    // }
+//         } catch (err) {
+//         console.error("❌ Error in pollBatchResults:", err.response?.data || err.message);
+//         throw new Error("Failed to poll Judge0 results");
+//         }
+//     }
 
-    // throw new Error("❌ Polling timed out after 10 attempts");
+//     throw new Error("❌ Polling timed out after 10 attempts");
 // };
 
-export const pollBatchResults = async (tokens) => {
-        let attempts = 0;
 
-        while (attempts < 10) {
-            const { data } = await axios.get(
-            `${process.env.JUDGE0_API_URL}/submissions/batch`,
-            {
-                params: {
-                tokens: tokens.join(','),     // works only if tokens is an array of strings
-                base64_encoded: false,
-                fields: '*',
-                },
-            }
-            );
+// export const pollBatchResults = async (tokens) => {
+//         let attempts = 0;
 
-            const allDone = data.submissions.every(sub => sub.status?.id >= 3);
+//         while (attempts < 10) {
+//             const { data } = await axios.get(
+//             `${process.env.JUDGE0_API_URL}/submissions/batch`,
+//             {
+//                 params: {
+//                 tokens: tokens.join(','),     // works only if tokens is an array of strings
+//                 base64_encoded: false,
+//                 fields: '*',
+//                 },
+//             }
+//             );
 
-            if (allDone) return data.submissions;
+//             const allDone = data.submissions.every(sub => sub.status?.id >= 3);
 
-            console.warn("⚠️ Some results are null or missing status. Retrying...");
-            await sleep(1500);
-            attempts++;
-        }
+//             if (allDone) return data.submissions;
 
-        throw new Error("❌ Polling timed out after 10 attempts");
-};
+//             console.warn("⚠️ Some results are null or missing status. Retrying...");
+//             await sleep(1500);
+//             attempts++;
+//         }
+
+//         throw new Error("❌ Polling timed out after 10 attempts");
+// };
 
 
-
-
-export const submitBatch = async (submissions) => {
-        try {
-            const { data } = await axios.post(
-            `${process.env.JUDGE0_API_URL}/submissions/batch?base64_encoded=false`,{
-                submissions 
-            });
+// export const submitBatch = async (submissions) => {
+//         try {
+//             const { data } = await axios.post(
+//             `${process.env.JUDGE0_API_URL}/submissions/batch?base64_encoded=false`,{
+//                 submissions 
+//             });
             
-            console.log("Submission Results:", data);
-
+//             console.log("Submission Results:", data);
             
-            return data.tokens.map((t) => t.token);   // ✅ Just return array of token strings
+            
+//             return data.tokens.map((t) => t.tokens   );   // ✅ Just return array of token strings
 
-        } catch (error) {
-            console.error("Error in submission:", error.response?.data || error.message);
-            throw error;
-        }
-};
+//         } catch (error) {
+//             console.error("Error in submission:", error.response?.data || error.message);
+//             throw error;
+//         }
+// };
 
 
 

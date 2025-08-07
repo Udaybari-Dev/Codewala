@@ -53,7 +53,7 @@ model Problem {
 
   testcases Json
   codeSnippets Json 
-  referenceSolutions Json
+  referenceSolution Json
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -62,6 +62,4 @@ model Problem {
 
   user User @relation(  fields: [userId], references: [id], onDelete: Cascade)
   
-
-
 }
