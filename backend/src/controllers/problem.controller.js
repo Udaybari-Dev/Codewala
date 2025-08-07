@@ -19,57 +19,68 @@ export const createProblem = async (req, res) => {
 
         try{
         
-        for(const {language,completeCode} of referenceSolution){
-            
+            for(const {language,completeCode} of referenceSolution){
+                
 
-            // source_code:
-            // language_id:
-            // stdin: 
-            // expectedOutput:
+                // source_code:
+                // language_id:
+                // stdin: 
+                // expectedOutput:
 
-            const languageId = getLanguageById(language);
-            
-            // I am creating Batch submission
-            const submissions = visibleTestCases.map((testcase)=>({
-                source_code:completeCode,
-                language_id: languageId,
-                stdin: testcase.input,
-                expected_output: testcase.output
-            }));
+                const languageId = getLanguageById(language);
+                
+                // I am creating Batch submission
+                const submissions = visibleTestCases.map((testcase)=>({
+                    source_code:completeCode,
+                    language_id: languageId,
+                    stdin: testcase.input,
+                    expected_output: testcase.output
+                }));
 
-            
-            const submitResult = await submitBatch(submissions);
-            // console.log(submitResult);
+                
+                const submitResult = await submitBatch(submissions);
+                // console.log(submitResult);
 
-            const resultToken = submitResult.map((value)=> value.token);
+                const resultToken = submitResult.map((value)=> value.token);
 
-            // ["db54881d-bcf5-4c7b-a2e3-d33fe7e25de7","ecc52a9b-ea80-4a00-ad50-4ab6cc3bb2a1","1b35ec3b-5776-48ef-b646-d5522bdeb2cc"]
-            
-        const testResult = await submitToken(resultToken);
+                // ["db54881d-bcf5-4c7b-a2e3-d33fe7e25de7","ecc52a9b-ea80-4a00-ad50-4ab6cc3bb2a1","1b35ec3b-5776-48ef-b646-d5522bdeb2cc"]
+                
+            const testResult = await submitToken(resultToken);
 
 
-        console.log(testResult);
+            console.log(testResult);
 
-        for(const test of testResult){
-            if(test.status_id!=3){
-            return res.status(400).send("Error Occured");
+            for(const test of testResult){
+                if(test.status_id!=3){
+                return res.status(400).send("Reference solution failed on test cases.");
+                }
             }
-        }
 
-        }
+            }
 
 
-        // We can store it in our DB
+            // We can store it in our DB
 
-        const userProblem =  await Problem.create({
-            ...req.body,
-            problemCreator: req.result._id
-        });
+            const newProblem =  await db.problem.create({
+            data: {
+                    title,
+                    description,
+                    difficulty,
+                    tags,
+                    examples,
+                    constraints,
+                    testcases,
+                    codeSnippets,
+                    referenceSolution,
+                    userId: req.user.id
+            }
+            });
 
-        res.status(201).send("Problem Saved Successfully");
-        }
-        catch(err){
-            res.status(400).send("Error: "+err);
+            res.status(201).json({ message: "Problem Saved Successfully", problem: newProblem });
+        } 
+        catch (err) {
+            console.error(err);
+            res.status(400).send("Error: " + err.message);
         }
 };
 
@@ -93,7 +104,6 @@ export const createProblem = async (req, res) => {
 //             error: `Language: ${language} is not supported`
 //             });
 //         }
-
 //         // Prepare submissions for each testcase
 //         const submissions = testcases.map(({ input, output }) => ({
 //             source_code: solutionCode,
