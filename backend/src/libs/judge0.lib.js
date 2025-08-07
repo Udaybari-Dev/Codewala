@@ -3,13 +3,16 @@ import dotenv from 'dotenv';
 
 
 export const getLanguageId = (lang) => {
+
+    if (!lang || typeof lang !== "string") return null;
+
     const languages = {
-        "c++":54,
+        "cpp":54,
         "java":62,
         "javascript":63
     }
 
-    return languages[lang.toLowerCase()];
+    return languages[lang.toLowerCase()] || null;
 }
 
 
@@ -19,12 +22,8 @@ export const submitBatch = async (submissions) => {
           const response = await axios.post(`${process.env.JUDGE0_API_URL}/submissions/batch`,
             { submissions },
             {
-              params: {
-                base64_encoded: 'false'
-              },
-              headers: {
-                'Content-Type': 'application/json'
-              }
+             params: { base64_encoded: 'false' },
+             headers: { 'Content-Type': 'application/json' },
             }
           );
 
