@@ -5,6 +5,13 @@ import { getLanguageId , submitToken, submitBatch } from '../libs/judge0.lib.js'
 
 
 export const createProblem = async (req, res) => {
+
+            // Temporary debug - add this at the start of createProblem function
+        console.log("Testing language mapping:");
+        console.log("cpp ->", getLanguageId("cpp"));
+        console.log("java ->", getLanguageId("java")); 
+        console.log("javascript ->", getLanguageId("javascript"));
+
             
         const {
             title,
@@ -25,8 +32,18 @@ export const createProblem = async (req, res) => {
                 // language_id:
                 // stdin: 
                 // expectedOutput:
-
+        // 1st debugger
+                console.log("Processing language:", language);
+                console.log("Complete code:", completeCode);
+                
                 const languageId = getLanguageId(language);
+                console.log("Got language ID:", languageId);
+        //2nd debugger     
+            if (!languageId) {
+                return res.status(400).send(`Unsupported language: ${language}`);
+         }
+
+                // const languageId = getLanguageId(language);
                 
                 // I am creating Batch submission
                 const submissions = testcases.map((testcase)=>({
@@ -35,8 +52,9 @@ export const createProblem = async (req, res) => {
                     stdin: testcase.input,
                     expected_output: testcase.output
                 }));
+        //3rd 
+                console.log("Submissions to send:", JSON.stringify(submissions, null, 2));
 
-                
                 const submitResult = await submitBatch(submissions);
                 console.log(submitResult);
 

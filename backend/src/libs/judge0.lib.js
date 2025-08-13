@@ -23,6 +23,7 @@ export const getLanguageId = (lang) => {
     }
 
     const languages = {
+        "C++": 54,
         "cpp": 54,
         "java": 62, 
         "javascript": 63
