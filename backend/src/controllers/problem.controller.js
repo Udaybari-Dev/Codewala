@@ -64,6 +64,21 @@ export const createProblem = async (req, res) => {
                 
             const testResult = await submitToken(resultToken);
             console.log(testResult);
+            for(const test of testResult){
+                console.log("=== Test Result Debug ===");
+                console.log("Status ID:", test.status_id);
+                console.log("Status Description:", test.status?.description);
+                console.log("Compile Output:", test.compile_output);
+                console.log("Stderr:", test.stderr);
+                console.log("Message:", test.message);
+                console.log("========================");
+    
+    if(test.status_id === 6) {
+        return res.status(400).send(`Compilation Error: ${test.compile_output || test.stderr || 'Unknown compilation error'}`);
+    }
+    // ... rest of your error handling
+}
+
 
             for(const test of testResult){
                 if(test.status_id!=3){
