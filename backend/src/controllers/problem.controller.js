@@ -1,18 +1,11 @@
-import {db} from '../libs/db.js';
-import { getLanguageId , submitToken, submitBatch } from '../libs/judge0.lib.js';
-
-
-
+import { db } from "../libs/db.js";
+import {
+  getJudge0LanguageId,
+  pollBatchResults,
+  submitBatch,
+} from "../libs/judge0.lib.js";
 
 export const createProblem = async (req, res) => {
-
-            // Temporary debug - add this at the start of createProblem function
-        console.log("Testing language mapping:");
-        console.log("cpp ->", getLanguageId("cpp"));
-        console.log("java ->", getLanguageId("java")); 
-        console.log("javascript ->", getLanguageId("javascript"));
-
-            
         const {
             title,
             description,
@@ -22,95 +15,184 @@ export const createProblem = async (req, res) => {
             constraints,
             testcases,
             codeSnippets,
-            referenceSolution
+            referenceSolutions,
         } = req.body;
 
-        try{
-        
-            for(const {language,completeCode} of referenceSolution){
-                // source_code:
-                // language_id:
-                // stdin: 
-                // expectedOutput:
-        // 1st debugger
-                console.log("Processing language:", language);
-                console.log("Complete code:", completeCode);
-                
-                const languageId = getLanguageId(language);
-                console.log("Got language ID:", languageId);
-        //2nd debugger     
-            if (!languageId) {
-                return res.status(400).send(`Unsupported language: ${language}`);
-         }
+  // going to check the user role once again
 
-                // const languageId = getLanguageId(language);
-                
-                // I am creating Batch submission
-                const submissions = testcases.map((testcase)=>({
-                    source_code:completeCode,
-                    language_id: languageId,
-                    stdin: testcase.input,
-                    expected_output: testcase.output
-                }));
-        //3rd 
-                console.log("Submissions to send:", JSON.stringify(submissions, null, 2));
+  try {
+    for (const [language, solutionCode] of Object.entries(referenceSolutions)) {
+      const languageId = getJudge0LanguageId(language);
 
-                const submitResult = await submitBatch(submissions);
-                console.log(submitResult);
+      if (!languageId) {
+        return res
+          .status(400)
+          .json({ error: `Language ${language} is not supported` });
+      }
 
-                const resultToken = submitResult.map((value)=> value.token);
+      //
+      const submissions = testcases.map(({ input, output }) => ({
+        source_code: solutionCode,
+        language_id: languageId,
+        stdin: input,
+        expected_output: output,
+      }));
 
-                // ["db54881d-bcf5-4c7b-a2e3-d33fe7e25de7","ecc52a9b-ea80-4a00-ad50-4ab6cc3bb2a1","1b35ec3b-5776-48ef-b646-d5522bdeb2cc"]
-                
-            const testResult = await submitToken(resultToken);
-            console.log(testResult);
-            for(const test of testResult){
-                console.log("=== Test Result Debug ===");
-                console.log("Status ID:", test.status_id);
-                console.log("Status Description:", test.status?.description);
-                console.log("Compile Output:", test.compile_output);
-                console.log("Stderr:", test.stderr);
-                console.log("Message:", test.message);
-                console.log("========================");
-    
-    if(test.status_id === 6) {
-        return res.status(400).send(`Compilation Error: ${test.compile_output || test.stderr || 'Unknown compilation error'}`);
-    }
-    // ... rest of your error handling
-}
+      const submissionResults = await submitBatch(submissions);
 
+      const tokens = submissionResults.map((res) => res.token);
 
-            for(const test of testResult){
-                if(test.status_id!=3){
-                return res.status(400).send("Reference solution failed on test cases.");
-                }
-            }
-            }
+      const results = await pollBatchResults(tokens);
 
-            // We can store it in our DB
-            const newProblem =  await db.problem.create({
-            data: {
-                    title,
-                    description,
-                    difficulty,
-                    tags,
-                    examples,
-                    constraints,
-                    testcases,
-                    codeSnippets,
-                    referenceSolution,
-                    userId: req.user.id
-            }
-            });
-            res.status(201).json({ message: "Problem Saved Successfully", problem: newProblem });
-        } 
-        catch (err) {
-            console.error(err);
-            res.status(400).send("Error: " + err.message);
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        console.log("Result-----", result);
+        // console.log(
+        //   `Testcase ${i + 1} and Language ${language} ----- result ${JSON.stringify(result.status.description)}`
+        // );
+        if (result.status.id !== 3) {
+          return res.status(400).json({
+            error: `Testcase ${i + 1} failed for language ${language}`,
+          });
         }
+      }
+    }
+
+    const newProblem = await db.problem.create({
+      data: {
+        title,
+        description,
+        difficulty,
+        tags,
+        examples,
+        constraints,
+        testcases,
+        codeSnippets,
+        referenceSolutions,
+        userId: req.user.id,
+      },
+    });
+
+    return res.status(201).json({
+      sucess: true,
+      message: "Message Created Successfully",
+      problem: newProblem,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      error: "Error While Creating Problem",
+    });
+  }
 };
 
 
+
+// export const createProblem = async (req, res) => {
+
+//             // Temporary debug - add this at the start of createProblem function
+//         console.log("Testing language mapping:");
+//         console.log("cpp ->", getLanguageId("cpp"));
+//         console.log("java ->", getLanguageId("java")); 
+//         console.log("javascript ->", getLanguageId("javascript"));
+
+            
+//         const {
+//             title,
+//             description,
+//             difficulty,
+//             tags,
+//             examples,
+//             constraints,
+//             testcases,
+//             codeSnippets,
+//             referenceSolution
+//         } = req.body;
+
+//         try{
+        
+//             for(const {language,completeCode} of referenceSolution){
+//                 // source_code:
+//                 // language_id:
+//                 // stdin: 
+//                 // expectedOutput:
+//         // 1st debugger
+//                 console.log("Processing language:", language);
+//                 console.log("Complete code:", completeCode);
+                
+//                 const languageId = getLanguageId(language);
+//                 console.log("Got language ID:", languageId);
+//         //2nd debugger     
+//             if (!languageId) {
+//                 return res.status(400).send(`Unsupported language: ${language}`);
+//          }
+
+//                 // const languageId = getLanguageId(language);
+                
+//                 // I am creating Batch submission
+//                 const submissions = testcases.map((testcase)=>({
+//                     source_code:completeCode,
+//                     language_id: languageId,
+//                     stdin: testcase.input,
+//                     expected_output: testcase.output
+//                 }));
+//         //3rd 
+//                 console.log("Submissions to send:", JSON.stringify(submissions, null, 2));
+
+//                 const submitResult = await submitBatch(submissions);
+//                 console.log(submitResult);
+
+//                 const resultToken = submitResult.map((value)=> value.token);
+
+//                 // ["db54881d-bcf5-4c7b-a2e3-d33fe7e25de7","ecc52a9b-ea80-4a00-ad50-4ab6cc3bb2a1","1b35ec3b-5776-48ef-b646-d5522bdeb2cc"]
+                
+//             const testResult = await submitToken(resultToken);
+//             console.log(testResult);
+//             for(const test of testResult){
+//                 console.log("=== Test Result Debug ===");
+//                 console.log("Status ID:", test.status_id);
+//                 console.log("Status Description:", test.status?.description);
+//                 console.log("Compile Output:", test.compile_output);
+//                 console.log("Stderr:", test.stderr);
+//                 console.log("Message:", test.message);
+//                 console.log("========================");
+    
+//     if(test.status_id === 6) {
+//         return res.status(400).send(`Compilation Error: ${test.compile_output || test.stderr || 'Unknown compilation error'}`);
+//     }
+//     // ... rest of your error handling
+// }
+
+
+//             for(const test of testResult){
+//                 if(test.status_id!=3){
+//                 return res.status(400).send("Reference solution failed on test cases.");
+//                 }
+//             }
+//             }
+
+//             // We can store it in our DB
+//             const newProblem =  await db.problem.create({
+//             data: {
+//                     title,
+//                     description,
+//                     difficulty,
+//                     tags,
+//                     examples,
+//                     constraints,
+//                     testcases,
+//                     codeSnippets,
+//                     referenceSolution,
+//                     userId: req.user.id
+//             }
+//             });
+//             res.status(201).json({ message: "Problem Saved Successfully", problem: newProblem });
+//         } 
+//         catch (err) {
+//             console.error(err);
+//             res.status(400).send("Error: " + err.message);
+//         }
+// };
 
 
 //     // Check if the user is an admin
@@ -188,7 +270,6 @@ export const createProblem = async (req, res) => {
 //         });
 //     }
 // };
-
 
 // export const createProblem = async (req, res) => {
 //     try {

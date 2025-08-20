@@ -2,6 +2,70 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 
 
+export const getJudge0LanguageId = (language)=>{
+    const languageMap = {
+        "PYTHON":71,
+        "JAVA":62,
+        "JAVASCRIPT":63,
+    }
+
+    return languageMap[language.toUpperCase()]
+}
+
+const sleep  = (ms)=> new Promise((resolve)=> setTimeout(resolve , ms))
+
+export const pollBatchResults = async (tokens)=>{
+    while(true){
+        
+        const {data} = await axios.get(`${process.env.JUDGE0_API_URL}/submissions/batch`,{
+            params:{
+                tokens:tokens.join(","),
+                base64_encoded:false,
+            }
+        })
+
+        const results = data.submissions;
+
+        const isAllDone = results.every(
+            (r)=> r.status.id !== 1 && r.status.id !== 2
+        )
+
+        if(isAllDone) return results
+        await sleep(1000)
+    }
+}
+
+export const submitBatch = async (submissions)=>{
+    const {data} = await axios.post(`${process.env.JUDGE0_API_URL}/submissions/batch?base64_encoded=false`,{
+        submissions
+    })
+
+
+    console.log("Submission Results: ", data)
+
+    return data // [{token} , {token} , {token}]
+}
+
+
+export function getLanguageName(languageId){
+    const LANGUAGE_NAMES = {
+        74: "TypeScript",
+        63: "JavaScript",
+        71: "Python",
+        62: "Java",
+    }
+
+    return LANGUAGE_NAMES[languageId] || "Unknown"
+}
+
+
+
+
+
+
+
+
+
 // export const getLanguageId = (lang) => {
 
 //     if (!lang || typeof lang !== "string") return null;
@@ -14,84 +78,84 @@ import dotenv from 'dotenv';
 
 //     return languages[lang.toLowerCase()] || null;
 // }
-export const getLanguageId = (lang) => {
-    console.log("Input language:", lang, "Type:", typeof lang);
+// export const getLanguageId = (lang) => {
+//     console.log("Input language:", lang, "Type:", typeof lang);
     
-    if (!lang || typeof lang !== "string") {
-        console.log("Invalid language input");
-        return null;
-    }
+//     if (!lang || typeof lang !== "string") {
+//         console.log("Invalid language input");
+//         return null;
+//     }
 
-    const languages = {
-        "C++": 54,
-        "cpp": 54,
-        "java": 62, 
-        "javascript": 63
-    };
+//     const languages = {
+//         "C++": 54,
+//         "cpp": 54,
+//         "java": 62, 
+//         "javascript": 63
+//     };
 
-    const result = languages[lang.toLowerCase()] || null;
-    console.log("Language mapping result:", result);
-    return result;
-}
-
-
-
-
-export const submitBatch = async (submissions) => {
-        try {
-          const response = await axios.post(`${process.env.JUDGE0_API_URL}/submissions/batch`,
-            { submissions },
-            {
-             params: { base64_encoded: 'false' },
-             headers: { 'Content-Type': 'application/json' },
-            }
-          );
-
-          return response.data;
-        } catch (error) {
-          console.error('Judge0 Submission Error:', error.message);
-          throw error;
-        }
-};
+//     const result = languages[lang.toLowerCase()] || null;
+//     console.log("Language mapping result:", result);
+//     return result;
+// }
 
 
 
-// 🕒 Proper delay function using Promise
-const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export const submitToken = async (resultToken) => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.JUDGE0_API_URL}/submissions/batch`,
-          {
-            params: {
-              tokens: resultToken.join(','),
-              base64_encoded: 'false',
-              fields: '*'
-            },
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-        return response.data;
-      } catch (error) {
-        console.error('Error fetching submissions:', error.message);
-        throw error;
-      }
-    };
+// export const submitBatch = async (submissions) => {
+//         try {
+//           const response = await axios.post(`${process.env.JUDGE0_API_URL}/submissions/batch`,
+//             { submissions },
+//             {
+//              params: { base64_encoded: 'false' },
+//              headers: { 'Content-Type': 'application/json' },
+//             }
+//           );
 
-    while (true) {
-        const result = await fetchData();
+//           return response.data;
+//         } catch (error) {
+//           console.error('Judge0 Submission Error:', error.message);
+//           throw error;
+//         }
+// };
 
-        const isResultReady = result.submissions.every((r) => r.status && r.status.id > 2);
 
-        if (isResultReady) return result.submissions;
 
-        await wait(1000); // wait 1 second before next poll
-    }
-};
+// // 🕒 Proper delay function using Promise
+// const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// export const submitToken = async (resultToken) => {
+//     const fetchData = async () => {
+//       try {
+//         const response = await axios.get(
+//           `${process.env.JUDGE0_API_URL}/submissions/batch`,
+//           {
+//             params: {
+//               tokens: resultToken.join(','),
+//               base64_encoded: 'false',
+//               fields: '*'
+//             },
+//             headers: {
+//               'Content-Type': 'application/json'
+//             }
+//           }
+//         );
+//         return response.data;
+//       } catch (error) {
+//         console.error('Error fetching submissions:', error.message);
+//         throw error;
+//       }
+//     };
+
+//     while (true) {
+//         const result = await fetchData();
+
+//         const isResultReady = result.submissions.every((r) => r.status && r.status.id > 2);
+
+//         if (isResultReady) return result.submissions;
+
+//         await wait(1000); // wait 1 second before next poll
+//     }
+// };
 
 
 

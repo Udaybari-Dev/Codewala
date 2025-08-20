@@ -55,7 +55,7 @@ export const register = async(req,res) => {
                 email: newUser.email,
                 name: newUser.name,
                 role: newUser.role,
-                image: User.image          
+                image: newUser.image          
                   }
             })
 
