@@ -53,12 +53,12 @@ model Problem {
   hints String?
   editorial String?
 
-  language  String  
-  solutionCode  Json     
+  language  String?  
+  solutionCode  Json?  
 
   testcases Json
   codeSnippets Json 
-  referenceSolution Json
+  referenceSolutions Json
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
