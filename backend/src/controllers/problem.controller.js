@@ -79,7 +79,8 @@ export const createProblem = async (req, res) => {
       problem: newProblem,
     });
   } catch (error) {
-    console.log(error);
+    console.error("Error creating problem:", error.response?.data || error.message || error);
+
     return res.status(500).json({
       error: "Error While Creating Problem",
     });
