@@ -44,9 +44,7 @@ export const createProblem = async (req, res) => {
       for (let i = 0; i < results.length; i++) {
         const result = results[i];
         console.log("Result-----", result);
-        // console.log(
-        //   `Testcase ${i + 1} and Language ${language} ----- result ${JSON.stringify(result.status.description)}`
-        // );
+     
         if (result.status.id !== 3) {
           return res.status(400).json({
             error: `Testcase ${i + 1} failed for language ${language}`,
@@ -85,7 +83,44 @@ export const createProblem = async (req, res) => {
 };
 
 
-export const getAllProblem = async (req , res)=> {};
+
+
+
+
+
+export const getAllProblem = async (req , res)=> {
+
+  try{
+    const problems = await db.problem.findMany();
+
+
+    if(!problems){
+      return res.status(404).json({
+        error : "No Problems Found"
+      })
+    }
+
+    res.status(200).json({
+      success : true,
+      message : "Problems Fetched Successfully",
+      problems
+    })
+
+
+  }catch(error){
+    console.log(error);
+ 
+    return res.status(500).json({
+      error: "Error While fetching Problems",
+    });
+
+  }
+
+
+};
+
+
+
 
 export const getProblemByID = async (req , res)=> {}
 
