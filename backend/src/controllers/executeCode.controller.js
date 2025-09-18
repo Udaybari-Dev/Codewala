@@ -1,3 +1,4 @@
+import {db} from  "../libs/db.js"
 import { getLanguageName, pollBatchResults, submitBatch } from "../libs/judge0.libs.js";
 
 
@@ -99,8 +100,7 @@ export const executeCode = async (req , res) =>{
         await db.problemSolved.upsert({
             where: {
             userId_problemId: {
-                userId,
-                problemId,
+                userId,problemId,
             },
             },
             update: {},
@@ -113,16 +113,16 @@ export const executeCode = async (req , res) =>{
 
         // 8. Save individual test case results  using detailedResult
         const testCaseResults = detailedResults.map((result) => ({
-        submissionId: submission.id,
-        testCase: result.testCase,
-        passed: result.passed,
-        stdout: result.stdout,
-        expected: result.expected,
-        stderr: result.stderr,
-        compileOutput: result.compile_output,
-        status: result.status,
-        memory: result.memory,
-        time: result.time,
+            submissionId: submission.id,
+            testCase: result.testCase,
+            passed: result.passed,
+            stdout: result.stdout,
+            expected: result.expected,
+            stderr: result.stderr,
+            compileOutput: result.compile_output,
+            status: result.status,
+            memory: result.memory,
+            time: result.time,
         }));
 
         await db.testCaseResult.createMany({
